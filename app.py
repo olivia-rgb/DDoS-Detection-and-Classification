@@ -18,16 +18,25 @@ st.set_page_config(
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Alan+Sans:wght@300..900&display=swap');
-
     
     * {
         font-family: "Alan Sans", sans-serif;
     }
     
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* Hide ALL Streamlit branding and menu items */
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
+    header {visibility: hidden !important; display: none !important;}
+    
+    /* Hide GitHub icon and deploy button */
+    .stDeployButton {display: none !important;}
+    button[kind="header"] {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    [data-testid="stStatusWidget"] {display: none !important;}
+    
+    /* Hide the entire header bar */
+    header[data-testid="stHeader"] {display: none !important;}
     
     /* Main background */
     .stApp {
@@ -99,7 +108,7 @@ st.markdown("""
     }
     
     .welcome-title {
-        font-size: 4rem;
+        font-size: 3.5rem;
         font-weight: 900;
         color: #065f46;
         margin-bottom: 1.5rem;
@@ -159,23 +168,12 @@ st.markdown("""
         font-weight: 800;
         margin: 0.5rem 0;
         letter-spacing: -0.02em;
-        display: flex
-        justify-content:center;
-        margin-top:auto
     }
     
     .metric-label {
         font-size: 1.5rem;
         opacity: 0.95;
         font-weight: 500;
-    }
-    
-    .metric-sublabel {
-        font-size: 1.2rem;
-        opacity: 0.9;
-        font-weight: 400;
-        margin-top: 0.5rem;
-        min-height: 1.5rem;
     }
     
     .stButton>button:hover {
@@ -248,9 +246,29 @@ st.markdown("""
         margin-top: 2rem;
         font-weight: 600;
     }
+     /* Kill all toolbar/action buttons */
+    [data-testid="stToolbar"],
+    [data-testid="stActionButton"],
+    button[kind="header"],
+    .stDeployButton {
+        display: none !important;
+        visibility: hidden !important;
+    }
     
     /* Mobile responsive */
     @media (max-width: 768px) {
+        /* Extra hiding for mobile */
+        #MainMenu, footer, header, 
+        .stDeployButton, 
+        button[kind="header"],
+        [data-testid="stToolbar"],
+        [data-testid="stDecoration"],
+        [data-testid="stStatusWidget"],
+        header[data-testid="stHeader"] {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        
         .main .block-container {
             padding: 1rem;
         }
@@ -512,20 +530,58 @@ def main():
                                     """, unsafe_allow_html=True)
                             
                             with col_chart2:
+                                st.markdown("### Attack Distribution")
+                                
+                                # Create vibrant color palette
+                                color_palette = [
+                                    '#ef4444',  # Red
+                                    '#f97316',  # Orange
+                                    '#8b5cf6',  # Purple
+                                    '#3b82f6',  # Blue
+                                    '#06b6d4',  # Cyan
+                                    '#ec4899',  # Pink
+                                    '#f59e0b',  # Amber
+                                    '#10b981',  # Green
+                                    '#6366f1',  # Indigo
+                                    '#14b8a6'   # Teal
+                                ]
+                                
+                                # Ensure we have enough colors
+                                num_attacks = len(attack_counts)
+                                colors = color_palette[:num_attacks] if num_attacks <= len(color_palette) else color_palette * (num_attacks // len(color_palette) + 1)
+                                colors = colors[:num_attacks]
+                                
                                 fig = go.Figure(data=[go.Pie(
-                                    labels=attack_counts.index,
-                                    values=attack_counts.values,
+                                    labels=attack_counts.index.tolist(),
+                                    values=attack_counts.values.tolist(),
                                     hole=0.4,
-                                    marker=dict(colors=['#065f46', '#047857', '#10b981', '#34d399'])
+                                    marker=dict(
+                                        colors=colors,
+                                        line=dict(color='#ffffff', width=3)
+                                    ),
+                                    textposition='inside',
+                                    textinfo='percent',
+                                    textfont=dict(size=14, color='white', family='Alan Sans'),
+                                    hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
                                 )])
                                 
                                 fig.update_layout(
-                                    title="Attack Distribution",
                                     height=400,
-                                    showlegend=True
+                                    showlegend=True,
+                                    legend=dict(
+                                        orientation="v",
+                                        yanchor="middle",
+                                        y=0.5,
+                                        xanchor="left",
+                                        x=1.02,
+                                        font=dict(size=12)
+                                    ),
+                                    margin=dict(l=20, r=120, t=20, b=20),
+                                    paper_bgcolor='rgba(0,0,0,0)',
+                                    plot_bgcolor='rgba(0,0,0,0)'
                                 )
                                 
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, use_container_width=True, key=f"pie_chart_{time.time()}")
                     else:
                         st.success("✓ All clear! No attacks detected in the network traffic.")
                     

@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import joblib
 import plotly.express as px
+import plotly.graph_objects as go
+
 
 # Configure page
 st.set_page_config(page_title="DDoS Detection System", page_icon="🛡️", layout="wide")
@@ -103,12 +105,50 @@ def main():
                                 attack_df = pd.DataFrame({'Attack_Type': attack_pred})
                                 attack_counts = attack_df['Attack_Type'].value_counts()
                                 
-                                fig = px.pie(
-                                    values=attack_counts.values,
-                                    names=attack_counts.index,
-                                    title="Detected Attack Types"
+                                # Extended custom color palette (12 distinct colors, starting with red)
+                                color_palette = [
+                                    '#ef4444',  # Red for most frequent
+                                    '#3b82f6',  # Blue
+                                    '#f59e0b',  # Amber
+                                    '#8b5cf6',  # Purple
+                                    '#ec4899',  # Pink
+                                    '#06b6d4',  # Cyan
+                                    '#84cc16',  # Lime
+                                    '#f97316',  # Orange
+                                    '#14b8a6',  # Teal
+                                    '#7c3aed',  # Violet
+                                    '#f472b6',  # Rose
+                                    '#22d3ee'   # Sky
+                                ]
+
+                                # Get exactly the number of colors we need
+                                n_types = len(attack_counts)
+                                chart_colors = color_palette[:n_types]
+
+                                fig = go.Figure(data=[go.Pie(
+                                    labels=attack_counts.index.tolist(),
+                                    values=attack_counts.values.tolist(),
+                                    hole=0.4,
+                                    marker=dict(
+                                        colors=chart_colors,
+                                        line=dict(color='#ffffff', width=2)
+                                    ),
+                                    textposition='auto',
+                                    textinfo='percent+label'
+                                )])
+
+                                fig.update_layout(
+                                    title="Detected Attack Types",
+                                    height=400,
+                                    showlegend=True,
+                                    template='plotly_white',
+                                    paper_bgcolor='rgba(0,0,0,0)',
+                                    plot_bgcolor='rgba(0,0,0,0)'
                                 )
-                                st.plotly_chart(fig)
+
+                                st.plotly_chart(fig, use_container_width=True)
+                            else:
+                                st.info("Attacks detected, but type classification unavailable.")
                         else:
                             st.success("✅ No attacks detected in the uploaded data")
                         
